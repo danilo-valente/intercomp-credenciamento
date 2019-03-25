@@ -1,6 +1,5 @@
 const path = require('path');
-const fs = require('fs');
-const {promises: fsPromises} = fs;
+const fs = require('fs-extra');
 const adler32 = require('adler32');
 const QRCode = require('qrcode');
 const {createCanvas, loadImage} = require('canvas');
@@ -23,30 +22,42 @@ const config = {
     },
     header: {
         font: 'Comfortaa-Bold',
-        fontSize: 16
+        fontSize: 16,
+        fontColor: '#363636'
     },
     pageCount: {
         font: 'Raleway-Regular',
         fontSize: 10,
+        fontColor: '#363636',
         right: 14,
         bottom: 32
     },
     tag: {
         width: 277.5,
         height: 123,
-        margin: 6,
+        margin: 0,
         padding: 6,
+        background: '#ffffff',
+        exceptionalBackground: '#ffffaa',
         font: 'Raleway-Regular',
-        fontSize: 10,
+        fontSize: 12,
+        fontColor: '#363636',
         nameFont: 'Raleway-Bold',
-        nameFontSize: 11,
+        nameFontSize: 14,
+        nameFontColor: '#363636',
         idMask: '000',
         hasBorder: true,
         borderColor: '#999999',
         borderWidth: 1,
-        borderRadius: 3,
+        borderRadius: 0,
         errorCorrectionLevel: 'Q',
-        logo: 'logo1039x1039.png'
+        logo: 'logo1039x1039.png',
+        exceptional: {
+            color: '#ff0000',
+            radius: 8,
+            borderColor: '#990000',
+            borderWidth: 2
+        }
     },
     data: {
         hashSeparator: ',',
@@ -77,7 +88,7 @@ module.exports = class IdCardLayout extends Layout {
         const {_pdf: pdf, _athletes: athletes} = this;
 
         const backgroundPath = path.join(this._globalConfig.imagesDir, config.background.image);
-        const logo = await fsPromises.readFile(backgroundPath);
+        const logo = await fs.readFile(backgroundPath);
 
         const tagsPerPage = config.page.rows * config.page.cols;
         const numberOfPages = Math.ceil(athletes.length / tagsPerPage);
@@ -103,7 +114,7 @@ module.exports = class IdCardLayout extends Layout {
         const {_pdf: pdf, _entity: entity} = this;
 
         // Header
-        pdf.font(config.header.font).fontSize(config.header.fontSize);
+        pdf.font(config.header.font).fontSize(config.header.fontSize).fillColor(config.header.fontColor);
 
         pdf.text(entity, 0, config.page.marginVt / 2, {
             width: config.pdf.size[0],
@@ -111,7 +122,7 @@ module.exports = class IdCardLayout extends Layout {
         });
 
         // Page count
-        pdf.font(config.pageCount.font).fontSize(config.pageCount.fontSize);
+        pdf.font(config.pageCount.font).fontSize(config.pageCount.fontSize).fillColor(config.header.fontColor);
 
         pdf.text(`Página ${pageIndex} de ${numberOfPages}`, config.page.marginHz, config.pdf.size[1] - config.pageCount.bottom, {
             width: config.pdf.size[0] - config.page.marginHz * 2,
@@ -126,9 +137,9 @@ module.exports = class IdCardLayout extends Layout {
 
         const qrcodeSize = config.tag.height - 2 * config.tag.padding;
 
-        await this._renderBackground(x, y, qrcodeSize, logo);
+        await this._renderBackground(x, y, qrcodeSize, logo, athlete);
 
-        await this._renderQrCode(x, y, qrcodeSize, text);
+        await this._renderQrCode(x, y, qrcodeSize, text, athlete);
 
         await this._renderData(x, y, qrcodeSize, athlete);
 
@@ -147,7 +158,7 @@ module.exports = class IdCardLayout extends Layout {
         pdf.stroke();
     }
 
-    async _renderBackground(x, y, qrcodeSize, logo) {
+    async _renderBackground(x, y, qrcodeSize, logo, athlete) {
         const {_pdf: pdf} = this;
 
         const height = config.tag.height - config.tag.padding * 2;
@@ -155,10 +166,18 @@ module.exports = class IdCardLayout extends Layout {
         const left = x + qrcodeSize + config.tag.padding + (config.tag.width - qrcodeSize - config.tag.padding - width) / 2;
         const top = y + (config.tag.height - height) / 2;
 
+        if (athlete.exceptional) {
+            pdf.fillColor(config.tag.exceptionalBackground);
+        } else {
+            pdf.fillColor(config.tag.background);
+        }
+
+        pdf.rect(x, y, config.tag.width, config.tag.height).fill();
+
         pdf.image(logo, left, top, { width, height });
     }
 
-    async _renderQrCode(x, y, qrcodeSize, text) {
+    async _renderQrCode(x, y, qrcodeSize, text, athlete) {
         const {_pdf: pdf} = this;
 
         const canvas = createCanvas(qrcodeSize, qrcodeSize);
@@ -166,17 +185,20 @@ module.exports = class IdCardLayout extends Layout {
         await QRCode.toCanvas(canvas, text, {
             errorCorrectionLevel: config.tag.errorCorrectionLevel,
             margin: 0,
-            width: qrcodeSize
+            width: qrcodeSize,
+            color: {
+                light: athlete.exceptional ? config.tag.exceptionalBackground : config.tag.background
+            }
         });
 
-        await this._renderLogo(canvas, qrcodeSize);
+        await this._renderLogo(canvas, qrcodeSize, athlete);
 
         const qrcodeBuffer = canvas.toBuffer('image/png');
 
         pdf.image(qrcodeBuffer, x + config.tag.padding, y + config.tag.padding);
     }
 
-    async _renderLogo(canvas, canvasSize) {
+    async _renderLogo(canvas, canvasSize, athlete) {
 
         const logoPath = path.join(this._globalConfig.imagesDir, config.tag.logo);
 
@@ -185,7 +207,7 @@ module.exports = class IdCardLayout extends Layout {
         const w = canvasSize / 3;
         const x = (canvasSize - w) / 2;
 
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = athlete.exceptional ? config.tag.exceptionalBackground : config.tag.background;
         ctx.fillRect(x, x, w, w);
         ctx.drawImage(image, x, x, w, w);
 
@@ -205,15 +227,15 @@ module.exports = class IdCardLayout extends Layout {
 
         const id = maskId(athlete.id);
 
-        pdf.font(config.tag.nameFont).fontSize(config.tag.nameFontSize);
+        pdf.font(config.tag.nameFont).fontSize(config.tag.nameFontSize).fillColor(config.tag.nameFontColor);
         pdf.text(id, left, top, textOptions);
         top += pdf.heightOfString(id, textOptions);
 
-        pdf.font(config.tag.nameFont).fontSize(config.tag.nameFontSize);
+        pdf.font(config.tag.nameFont).fontSize(config.tag.nameFontSize).fillColor(config.tag.nameFontColor);
         pdf.text(athlete.name, left, top, textOptions);
         top += pdf.heightOfString(athlete.name, textOptions);
 
-        pdf.font(config.tag.font).fontSize(config.tag.fontSize);
+        pdf.font(config.tag.font).fontSize(config.tag.fontSize).fillColor(config.tag.fontColor);
         pdf.text(athlete.entity, left, top, textOptions);
         top += pdf.heightOfString(athlete.entity, textOptions);
     }

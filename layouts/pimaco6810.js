@@ -1,9 +1,8 @@
 const path = require('path');
-const fs = require('fs');
-const {promises: fsPromises} = fs;
+const fs = require('fs-extra');
 const adler32 = require('adler32');
 const QRCode = require('qrcode');
-const {createCanvas, loadImage} = require('canvas');
+const {createCanvas} = require('canvas');
 
 const Layout = require('../Layout');
 
@@ -75,7 +74,7 @@ module.exports = class Pimaco6180Layout extends Layout {
         const {_pdf: pdf, _athletes: athletes} = this;
 
         const backgroundPath = path.join(this._globalConfig.imagesDir, config.background.image);
-        const logo = await fsPromises.readFile(backgroundPath);
+        const logo = await fs.readFile(backgroundPath);
 
         const tagsPerPage = config.page.rows * config.page.cols;
         const numberOfPages = Math.ceil(athletes.length / tagsPerPage);
@@ -202,15 +201,3 @@ module.exports = class Pimaco6180Layout extends Layout {
 function maskId(id) {
     return `${config.tag.idMask}${id}`.substr(-3);
 }
-
-// async function renderLogo(canvas, canvasSize) {
-
-//     const ctx = canvas.getContext('2d');
-//     const image = await loadImage(LOGO_PATH);
-//     const w = canvasSize / 3;
-//     const x = (canvasSize - w) / 2;
-
-//     ctx.fillStyle = '#ffffff';
-//     ctx.fillRect(x, x, w, w);
-//     ctx.drawImage(image, x, x, w, w);
-// }

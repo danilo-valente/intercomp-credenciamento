@@ -1,6 +1,5 @@
 const path = require('path');
-const fs = require('fs');
-const {promises: fsPromises} = fs;
+const fs = require('fs-extra');
 const pdfkit = require('pdfkit');
 
 module.exports = class Layout {
@@ -25,7 +24,7 @@ module.exports = class Layout {
     }
 
     async _registerFonts() {
-        const fonts = await fsPromises.readdir(this._globalConfig.fontsDir);
+        const fonts = await fs.readdir(this._globalConfig.fontsDir);
 
         fonts.forEach(file => {
             const {name} = path.parse(file);

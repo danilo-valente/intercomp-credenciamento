@@ -8,11 +8,9 @@ module.exports = {
     headers: [
         'id',
         'name',
-        'birthdate',
-        'rg',
-        'cpf',
         'ra',
         'entity',
-        'course'
+        'course',
+        'exceptional'
     ]
 };
