@@ -63,7 +63,7 @@ async function generateAll(argv, config) {
 
 async function generate(inputFile, outputFile, layoutClass, entity, config) {
 
-    const athletes = await csvtojson({ headers: config.headers }).fromFile(inputFile);
+    const athletes = await csvtojson({ headers: config.headers, noheader: true }).fromFile(inputFile);
 
     const layout = new layoutClass(config, entity, athletes, outputFile);
 

@@ -51,7 +51,7 @@ const config = {
         borderWidth: 1,
         borderRadius: 0,
         errorCorrectionLevel: 'Q',
-        logo: 'logo1039x1039.png',
+        logo: 'logo-30-anos.png',
         exceptional: {
             color: '#ff0000',
             radius: 8,
@@ -66,7 +66,7 @@ const config = {
     background: {
         width: 1039,
         height: 1023,
-        image: 'background.png'
+        image: 'background-patrocinador.png'
     }
 };
 
