@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs-extra');
 const adler32 = require('adler32');
 const QRCode = require('qrcode');
+const svg2pdfkit = require('svg-to-pdfkit');
 const {createCanvas, loadImage} = require('canvas');
 
 const Layout = require('../Layout');
@@ -16,7 +17,8 @@ const config = {
     },
     page: {
         marginHz: 14,
-        marginVt: 38,
+        marginTop: 22,
+        marginBottom: 16,
         rows: 6,
         cols: 2
     },
@@ -38,7 +40,7 @@ const config = {
         margin: 0,
         padding: 6,
         background: '#ffffff',
-        exceptionalBackground: '#ffffaa',
+        exceptionalBackground: '#ffbfd6',
         font: 'Raleway-Regular',
         fontSize: 12,
         fontColor: '#363636',
@@ -51,7 +53,7 @@ const config = {
         borderWidth: 1,
         borderRadius: 0,
         errorCorrectionLevel: 'Q',
-        logo: 'logo-30-anos.png',
+        logo: 'logo-30-anos.svg',
         exceptional: {
             color: '#ff0000',
             radius: 8,
@@ -64,9 +66,9 @@ const config = {
         qrcodeSeparator: '\n'
     },
     background: {
-        width: 1039,
-        height: 1023,
-        image: 'background-patrocinador.png'
+        width: 1565,
+        height: 800,
+        image: 'logo-vtex.svg'
     }
 };
 
@@ -88,7 +90,12 @@ module.exports = class IdCardLayout extends Layout {
         const {_pdf: pdf, _athletes: athletes} = this;
 
         const backgroundPath = path.join(this._globalConfig.imagesDir, config.background.image);
-        const logo = await fs.readFile(backgroundPath);
+        const backgroundImage = await fs.readFile(backgroundPath);
+        this._backgroundImage = backgroundImage.toString('utf8');
+
+        const qrcodeLogoPath = path.join(this._globalConfig.imagesDir, config.tag.logo);
+        const qrcodeLogoImage = await fs.readFile(qrcodeLogoPath);
+        this._qrcodeLogoImage = qrcodeLogoImage.toString('utf8');
 
         const tagsPerPage = config.page.rows * config.page.cols;
         const numberOfPages = Math.ceil(athletes.length / tagsPerPage);
@@ -106,7 +113,7 @@ module.exports = class IdCardLayout extends Layout {
                 await this._renderPageData(k / tagsPerPage + 1, numberOfPages);
             }
 
-            await this._renderTag(config.page.marginHz + (config.tag.width + config.tag.margin) * j, config.page.marginVt + (config.tag.height + config.tag.margin) * i, athlete, logo);
+            await this._renderTag(config.page.marginHz + (config.tag.width + config.tag.margin) * j, config.page.marginTop + (config.tag.height + config.tag.margin) * i, athlete);
         }
     }
 
@@ -116,7 +123,7 @@ module.exports = class IdCardLayout extends Layout {
         // Header
         pdf.font(config.header.font).fontSize(config.header.fontSize).fillColor(config.header.fontColor);
 
-        pdf.text(entity, 0, config.page.marginVt / 2, {
+        pdf.text(entity, 0, config.page.marginTop + config.page.marginBottom, {
             width: config.pdf.size[0],
             align: 'center'
         });
@@ -130,14 +137,14 @@ module.exports = class IdCardLayout extends Layout {
         });
     }
 
-    async _renderTag(x, y, athlete, logo) {
+    async _renderTag(x, y, athlete) {
         const hash = adler32.sum(Object.values(athlete).join(config.data.hashSeparator)).toString(16);
 
-        const text = [hash, maskId(athlete.id), athlete.name, athlete.entity].join(config.data.qrcodeSeparator);
+        const text = [hash, maskId(athlete), athlete.name, athlete.entity].join(config.data.qrcodeSeparator);
 
         const qrcodeSize = config.tag.height - 2 * config.tag.padding;
 
-        await this._renderBackground(x, y, qrcodeSize, logo, athlete);
+        await this._renderBackground(x, y, qrcodeSize, athlete);
 
         await this._renderQrCode(x, y, qrcodeSize, text, athlete);
 
@@ -158,13 +165,13 @@ module.exports = class IdCardLayout extends Layout {
         pdf.stroke();
     }
 
-    async _renderBackground(x, y, qrcodeSize, logo, athlete) {
+    async _renderBackground(x, y, qrcodeSize, athlete) {
         const {_pdf: pdf} = this;
 
-        const height = config.tag.height - config.tag.padding * 2;
+        const height = config.tag.height / 2 - config.tag.padding;
         const width = height * config.background.width / config.background.height;
         const left = x + qrcodeSize + config.tag.padding + (config.tag.width - qrcodeSize - config.tag.padding - width) / 2;
-        const top = y + (config.tag.height - height) / 2;
+        const top = y + config.tag.height / 2;
 
         if (athlete.exceptional) {
             pdf.fillColor(config.tag.exceptionalBackground);
@@ -174,7 +181,7 @@ module.exports = class IdCardLayout extends Layout {
 
         pdf.rect(x, y, config.tag.width, config.tag.height).fill();
 
-        pdf.image(logo, left, top, { width, height });
+        svg2pdfkit(pdf, this._backgroundImage, left, top, { width, height });
     }
 
     async _renderQrCode(x, y, qrcodeSize, text, athlete) {
@@ -191,27 +198,35 @@ module.exports = class IdCardLayout extends Layout {
             }
         });
 
-        await this._renderLogo(canvas, qrcodeSize, athlete);
-
         const qrcodeBuffer = canvas.toBuffer('image/png');
 
-        pdf.image(qrcodeBuffer, x + config.tag.padding, y + config.tag.padding);
+        const baseX = x + config.tag.padding;
+        const baseY = y + config.tag.padding;
+
+        pdf.image(qrcodeBuffer, baseX, baseY);
+
+        await this._renderQrCodeLogo(baseX, baseY, qrcodeSize, athlete);
     }
 
-    async _renderLogo(canvas, canvasSize, athlete) {
+    async _renderQrCodeLogo(baseX, baseY, canvasSize, athlete) {
+        const {_pdf: pdf} = this;
 
-        const logoPath = path.join(this._globalConfig.imagesDir, config.tag.logo);
+        const width = canvasSize / 3;
+        const relX = (canvasSize - width) / 2;
 
-        const ctx = canvas.getContext('2d');
-        const image = await loadImage(logoPath);
-        const w = canvasSize / 3;
-        const x = (canvasSize - w) / 2;
+        const left = baseX + relX;
+        const top = baseY + relX;
 
-        ctx.fillStyle = athlete.exceptional ? config.tag.exceptionalBackground : config.tag.background;
-        ctx.fillRect(x, x, w, w);
-        ctx.drawImage(image, x, x, w, w);
+        pdf.fillColor(athlete.exceptional ? config.tag.exceptionalBackground : config.tag.background)
+            .rect(left, top, width, width)
+            .fill();
 
-        return ctx;
+        svg2pdfkit(pdf, this._qrcodeLogoImage, left, top, {
+            width,
+            height: width,
+            assumePt: true,
+            preserveAspectRatio: 'xMinYMin meet'
+        });
     }
 
     async _renderData(x, y, qrcodeSize, athlete) {
@@ -225,7 +240,7 @@ module.exports = class IdCardLayout extends Layout {
             align: 'left'
         };
 
-        const id = maskId(athlete.id);
+        const id = maskId(athlete);
 
         pdf.font(config.tag.nameFont).fontSize(config.tag.nameFontSize).fillColor(config.tag.nameFontColor);
         pdf.text(id, left, top, textOptions);
@@ -241,6 +256,6 @@ module.exports = class IdCardLayout extends Layout {
     }
 };
 
-function maskId(id) {
-    return `${config.tag.idMask}${id}`.substr(-3);
+function maskId(athlete) {
+    return `${config.tag.idMask}${athlete.id}`.substr(-3) + (athlete.exceptional ? '-E' : '');
 }
