@@ -3,14 +3,23 @@ const path = require('path');
 const RESOURCES_DIR = 'resources';
 
 module.exports = {
+    showLogs: false,
     fontsDir: path.join(__dirname, RESOURCES_DIR, 'fonts'),
     imagesDir: path.join(__dirname, RESOURCES_DIR, 'images'),
+    skipLines: 4,
     headers: [
-        'id',
-        'name',
-        'ra',
-        'entity',
-        'course',
-        'exceptional'
-    ]
+        '',
+        '#',
+        'Nome Completo',
+        'RA',
+        'Curso',
+        'Excepcional'
+    ],
+    attributes: {
+        id: '#',
+        name: 'Nome Completo',
+        ra: 'RA',
+        course: 'Curso',
+        exceptional: 'Excepcional'
+    }
 };

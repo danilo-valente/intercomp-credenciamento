@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs-extra');
+const chalk = require('chalk');
 const adler32 = require('adler32');
 const QRCode = require('qrcode');
 const svg2pdfkit = require('svg-to-pdfkit');
@@ -87,7 +88,7 @@ module.exports = class IdCardLayout extends Layout {
     }
 
     async renderDocument() {
-        const {_pdf: pdf, _athletes: athletes} = this;
+        const {_pdf: pdf, _athletes: athletes, _entity: entity} = this;
 
         const backgroundPath = path.join(this._globalConfig.imagesDir, config.background.image);
         const backgroundImage = await fs.readFile(backgroundPath);
@@ -99,6 +100,13 @@ module.exports = class IdCardLayout extends Layout {
 
         const tagsPerPage = config.page.rows * config.page.cols;
         const numberOfPages = Math.ceil(athletes.length / tagsPerPage);
+
+        const progressBar = this._multiProgress.newBar(chalk.green(entity) + '\t[:bar] :percent | ETA: :etas', {
+            complete: '█',
+            incomplete: '░',
+            width: 30,
+            total: athletes.length
+        });
 
         for (let k = 0; k < athletes.length; k++) {
             const athlete = athletes[k];
@@ -114,6 +122,8 @@ module.exports = class IdCardLayout extends Layout {
             }
 
             await this._renderTag(config.page.marginHz + (config.tag.width + config.tag.margin) * j, config.page.marginTop + (config.tag.height + config.tag.margin) * i, athlete);
+
+            progressBar.tick();
         }
     }
 
@@ -138,9 +148,11 @@ module.exports = class IdCardLayout extends Layout {
     }
 
     async _renderTag(x, y, athlete) {
+        const {_entity: entity, _entityTag: entityTag} = this;
+
         const hash = adler32.sum(Object.values(athlete).join(config.data.hashSeparator)).toString(16);
 
-        const text = [hash, maskId(athlete), athlete.name, athlete.entity].join(config.data.qrcodeSeparator);
+        const text = [hash, maskId(entityTag, athlete), capitalizeFirstLetters(athlete.name), entity].join(config.data.qrcodeSeparator);
 
         const qrcodeSize = config.tag.height - 2 * config.tag.padding;
 
@@ -148,7 +160,7 @@ module.exports = class IdCardLayout extends Layout {
 
         await this._renderQrCode(x, y, qrcodeSize, text, athlete);
 
-        await this._renderData(x, y, qrcodeSize, athlete);
+        await this._renderData(x, y, qrcodeSize,  athlete);
 
         if (config.tag.hasBorder) {
             await this._renderBorder(x, y);
@@ -230,7 +242,7 @@ module.exports = class IdCardLayout extends Layout {
     }
 
     async _renderData(x, y, qrcodeSize, athlete) {
-        const {_pdf: pdf} = this;
+        const {_pdf: pdf, _entity: entity, _entityTag: entityTag} = this;
 
         const left = x + qrcodeSize + config.tag.padding * 2;
         let top = y + config.tag.padding;
@@ -240,22 +252,30 @@ module.exports = class IdCardLayout extends Layout {
             align: 'left'
         };
 
-        const id = maskId(athlete);
+        const id = maskId(entityTag, athlete);
 
         pdf.font(config.tag.nameFont).fontSize(config.tag.nameFontSize).fillColor(config.tag.nameFontColor);
         pdf.text(id, left, top, textOptions);
         top += pdf.heightOfString(id, textOptions);
 
+        const athleteName = capitalizeFirstLetters(athlete.name);
         pdf.font(config.tag.nameFont).fontSize(config.tag.nameFontSize).fillColor(config.tag.nameFontColor);
-        pdf.text(athlete.name, left, top, textOptions);
-        top += pdf.heightOfString(athlete.name, textOptions);
+        pdf.text(athleteName, left, top, textOptions);
+        top += pdf.heightOfString(athleteName, textOptions);
 
         pdf.font(config.tag.font).fontSize(config.tag.fontSize).fillColor(config.tag.fontColor);
-        pdf.text(athlete.entity, left, top, textOptions);
-        top += pdf.heightOfString(athlete.entity, textOptions);
+        pdf.text(entity, left, top, textOptions);
+        top += pdf.heightOfString(entity, textOptions);
     }
 };
 
-function maskId(athlete) {
-    return `${config.tag.idMask}${athlete.id}`.substr(-3) + (athlete.exceptional ? '-E' : '');
+function maskId(entityTag, athlete) {
+    return entityTag + `${config.tag.idMask}${athlete.id}`.substr(-3) + (athlete.exceptional ? '-E' : '');
+}
+
+function capitalizeFirstLetters(str) {
+    return str.toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.substring(1))
+        .join(' ');
 }

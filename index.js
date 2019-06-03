@@ -4,6 +4,7 @@ const fs = require('fs-extra');
 const csvtojson = require('csvtojson');
 const glob = util.promisify(require('glob'));
 const chalk = require('chalk');
+const MultiProgress = require('multi-progress');
 
 const config = require('./config');
 
@@ -45,15 +46,20 @@ async function generateAll(argv, config) {
 
     await fs.mkdirp(outputDir);
 
-    const tasks = inputFiles.map(inputFile => {
+    const multiProgress = new MultiProgress();
+
+    const tasks = inputFiles.map((inputFile, i) => {
         const basename = path.basename(inputFile, path.extname(inputFile));
         const outputFile = path.join(outputDir, basename + '.pdf');
 
-        const entity = basename.match(/\w+/g).map(w => w[0].toUpperCase() + w.substr(1)).join(' ');
+        const entity = basename.match(/\S+/g).map(w => w[0].toUpperCase() + w.substr(1)).join(' ');
+        const entityTag = String.fromCharCode(65 + i);
 
-        console.log(`Generating document ${chalk.green(outputFile)} from ${chalk.green(inputFile)} for entity ${chalk.green(entity)} using layout ${chalk.green(layoutId)}`);
+        if (config.showLogs) {
+            console.log(`Generating document ${chalk.green(outputFile)} from ${chalk.green(inputFile)} for entity ${chalk.green(entity)} using layout ${chalk.green(layoutId)}`);
+        }
 
-        return generate(inputFile, outputFile, layoutClass, entity, config);
+        return generate(inputFile, outputFile, layoutClass, entity, entityTag, multiProgress, config);
     });
 
     for (let i = 0; i < tasks.length; i++) {
@@ -61,13 +67,25 @@ async function generateAll(argv, config) {
     }
 }
 
-async function generate(inputFile, outputFile, layoutClass, entity, config) {
+async function generate(inputFile, outputFile, layoutClass, entity, entityTag, multiProgress, config) {
 
-    const athletes = await csvtojson({ headers: config.headers, noheader: true }).fromFile(inputFile);
+    const rawObjects = await csvtojson({ headers: config.headers, noheader: true }).fromFile(inputFile);
 
-    const layout = new layoutClass(config, entity, athletes, outputFile);
+    const attributeNames = Object.keys(config.attributes);
+
+    const athletes = rawObjects.slice(config.skipLines)
+        .map(obj => attributeNames.reduce((athlete, attr) => {
+            athlete[attr] = obj[config.attributes[attr]];
+            return athlete;
+        }, {}))
+        .filter(athlete => athlete.name && athlete.name.trim());
+    
+
+    const layout = new layoutClass(config, entity, entityTag, multiProgress, athletes, outputFile);
 
     await layout.render();
 
-    console.log(`Documents ${chalk.green('successfully')} generated`)
+    if (config.showLogs) {
+        console.log(`Documents ${chalk.green('successfully')} generated`)
+    }
 }
