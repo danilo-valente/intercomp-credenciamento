@@ -4,10 +4,9 @@ const pdfkit = require('pdfkit');
 
 module.exports = class Layout {
 
-    constructor(globalConfig, entity, entityTag, multiProgress, athletes, outputFile) {
+    constructor(entity, athletes, outputFile, multiProgress, globalConfig) {
         this._globalConfig = globalConfig;
         this._entity = entity;
-        this._entityTag = entityTag || '';
         this._multiProgress = multiProgress;
         this._athletes = athletes;
         this._outputFile = outputFile;

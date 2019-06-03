@@ -1,0 +1,17 @@
+{
+    "name": "Fatec Carapicuíba",
+    "tag": "FC",
+    "courses": {
+        "regular": [
+            "Bacharelado em Tecnologia da Informação",
+            "Tecnologia em Análise e Desenvolvimento de Sistemas",
+            "Tecnologia em Jogos Digitais",
+            "Tecnologia em Sistemas para Internet"
+        ],
+        "exceptional": [
+            "Tecnologia em Logística",
+            "Tecnologia em Secretariado",
+            "Tecnologia em Segurança da Informação"
+        ]
+    }
+}

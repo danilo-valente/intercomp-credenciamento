@@ -1,0 +1,32 @@
+{
+    "name": "UFJF",
+    "tag": "JF",
+    "courses": {
+        "regular": [
+            "Bacharelado em Ciência da Computação",
+            "Bacharelado em Estatística",
+            "Bacharelado em Matemática",
+            "Bacharelado em Sistemas de Informação",
+            "Ciências Exatas",
+            "Ciências Exatas - Segundo Ciclo Computação",
+            "Ciências Exatas - Segundo Ciclo Estatística",
+            "Ciências Exatas - Segundo Ciclo Matemática",
+            "Ciências Exatas - Segundo Ciclo Sistemas de Informação",
+            "Engenharia Computacional",
+            "Licenciatura em Matemática",
+            "Pós-Graduação em Ciência da Computação",
+            "Pós-Graduação em Matemática"
+        ],
+        "exceptional": [
+            "Bacharelado em Ciências Exatas",
+            "Bacharelado em Física",
+            "Bacharelado em Química",
+            "Licenciatura em Física",
+            "Licenciatura em Química",
+            "Licenciatura em Química",
+            "Pós-Graduação em Física",
+            "Pós-Graduação em Modelagem Computacional",
+            "Pós-Graduação em Química"
+        ]
+    }
+}

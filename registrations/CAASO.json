@@ -1,0 +1,22 @@
+{
+    "name": "CAASO",
+    "tag": "CA",
+    "courses": {
+        "regular": [
+            "Bacharelado em Ciência da Computação",
+            "Bacharelado em Estatística",
+            "Bacharelado em Informática",
+            "Bacharelado em Matemática",
+            "Bacharelado em Matemática Aplicada e Computação Científica",
+            "Bacharelado em Sistemas de Informação",
+            "Engenharia de Computação",
+            "Licenciatura em Matemática",
+            "Pós-Graduação em Ciências da Computação",
+            "Pós-Graduação em Matemática"
+        ],
+        "exceptional": [
+            "Física Computacional",
+            "Licenciatura em Ciências Exatas"
+        ]
+    }
+}

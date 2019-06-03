@@ -1,0 +1,22 @@
+{
+    "name": "Unicamp",
+    "tag": "U",
+    "courses": {
+        "regular": [
+            "Bacharelado em Ciência da Computação",
+            "Bacharelado em Estatística",
+            "Bacharelado em Matemática",
+            "Bacharelado em Matemática Aplicada e Computacional",
+            "Básico Integrado em Matemática, Física e Matemática Aplicada e Computacional",
+            "Engenharia de Computação",
+            "Licenciatura em Matemática",
+            "Pós-Graduação em Ciência da Computação",
+            "Pós-Graduação em Estatística",
+            "Pós-Graduação em Matemática"
+        ],
+        "exceptional": [
+            "Bacharelado em Física",
+            "Licenciatura em Física"
+        ]
+    }
+}

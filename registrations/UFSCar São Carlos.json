@@ -1,0 +1,21 @@
+{
+    "name": "UFSCar São Carlos",
+    "tag": "F",
+    "courses": {
+        "regular": [
+            "Bacharelado em Ciência da Computação",
+            "Bacharelado em Estatística",
+            "Bacharelado em Matemática",
+            "Engenharia de Computação",
+            "Licenciatura em Matemática",
+            "Pós-Graduação em Computação",
+            "Pós-Graduação em Estatística",
+            "Pós-Graduação em Matemática"
+        ],
+        "exceptional": [
+            "Bacharelado em Física",
+            "Engenharia Física",
+            "Licenciatura em Física"
+        ]
+    }
+}

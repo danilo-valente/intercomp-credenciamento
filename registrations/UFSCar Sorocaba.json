@@ -1,0 +1,15 @@
+{
+    "name": "UFSCar Sorocaba",
+    "tag": "S",
+    "courses": {
+        "regular": [
+            "Bacharelado em Ciência da Computação",
+            "Licenciatura em Matemática",
+            "Pós-Graduação em Computação"
+        ],
+        "exceptional": [
+            "Licenciatura em Física",
+            "Licenciatura em Química"
+        ]
+    }
+}

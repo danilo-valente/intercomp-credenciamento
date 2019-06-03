@@ -1,8 +1,10 @@
+const util = require('util');
 const path = require('path');
 const fs = require('fs-extra');
 const chalk = require('chalk');
 const adler32 = require('adler32');
 const QRCode = require('qrcode');
+const svg2img = util.promisify(require('svg2img'));
 const svg2pdfkit = require('svg-to-pdfkit');
 const {createCanvas, loadImage} = require('canvas');
 
@@ -10,15 +12,20 @@ const Layout = require('../Layout');
 
 adler32.register();
 
-const config = {
+const layoutConfig = {
+    progressBar: {
+        width: 30,
+        complete: '█',
+        incomplete: '░'
+    },
     pdf: {
         margin: 0,
         dpi: 72,
         size: [595, 842]
     },
     page: {
-        marginHz: 14,
-        marginTop: 22,
+        marginHz: 20,
+        marginTop: 44,
         marginBottom: 16,
         rows: 6,
         cols: 2
@@ -26,7 +33,8 @@ const config = {
     header: {
         font: 'Comfortaa-Bold',
         fontSize: 16,
-        fontColor: '#363636'
+        fontColor: '#363636',
+        top: 22
     },
     pageCount: {
         font: 'Raleway-Regular',
@@ -84,34 +92,30 @@ module.exports = class IdCardLayout extends Layout {
     }
 
     pdfConfig() {
-        return config.pdf;
+        return layoutConfig.pdf;
     }
 
     async renderDocument() {
         const {_pdf: pdf, _athletes: athletes, _entity: entity} = this;
 
-        const backgroundPath = path.join(this._globalConfig.imagesDir, config.background.image);
-        const backgroundImage = await fs.readFile(backgroundPath);
-        this._backgroundImage = backgroundImage.toString('utf8');
+        if (!athletes || athletes.length === 0) {
+            return;
+        }
 
-        const qrcodeLogoPath = path.join(this._globalConfig.imagesDir, config.tag.logo);
-        const qrcodeLogoImage = await fs.readFile(qrcodeLogoPath);
-        this._qrcodeLogoImage = qrcodeLogoImage.toString('utf8');
+        await this._setupImages();
 
-        const tagsPerPage = config.page.rows * config.page.cols;
+        const tagsPerPage = layoutConfig.page.rows * layoutConfig.page.cols;
         const numberOfPages = Math.ceil(athletes.length / tagsPerPage);
 
-        const progressBar = this._multiProgress.newBar(chalk.green(entity) + '\t[:bar] :percent | ETA: :etas', {
-            complete: '█',
-            incomplete: '░',
-            width: 30,
+        const progressBar = this._multiProgress.newBar(chalk.green(entity.name) + ' [:bar] :percent | ETA: :etas', {
+            ...layoutConfig.progressBar,
             total: athletes.length
         });
 
         for (let k = 0; k < athletes.length; k++) {
             const athlete = athletes[k];
-            const j = k % config.page.cols;
-            const i = Math.floor(k / config.page.cols) % config.page.rows;
+            const j = k % layoutConfig.page.cols;
+            const i = Math.floor(k / layoutConfig.page.cols) % layoutConfig.page.rows;
 
             if (k % tagsPerPage === 0) {
                 if (k > 0) {
@@ -121,48 +125,72 @@ module.exports = class IdCardLayout extends Layout {
                 await this._renderPageData(k / tagsPerPage + 1, numberOfPages);
             }
 
-            await this._renderTag(config.page.marginHz + (config.tag.width + config.tag.margin) * j, config.page.marginTop + (config.tag.height + config.tag.margin) * i, athlete);
+            await this._renderTag(layoutConfig.page.marginHz + (layoutConfig.tag.width + layoutConfig.tag.margin) * j, layoutConfig.page.marginTop + (layoutConfig.tag.height + layoutConfig.tag.margin) * i, athlete);
 
             progressBar.tick();
         }
+    }
+
+    async _setupImages() {
+
+        // Background
+        const backgroundPath = path.join(this._globalConfig.imagesDir, layoutConfig.background.image);
+        const backgroundSvg = await fs.readFile(backgroundPath);
+        this._backgroundSvg = backgroundSvg.toString('utf8');
+
+        this._backgroundHeight = layoutConfig.tag.height / 2 - layoutConfig.tag.padding;
+        this._backgroundWidth = this._backgroundHeight * layoutConfig.background.width / layoutConfig.background.height;
+
+        // Multiply dimensions to reduce quality loss
+        this._backgroundPng = await svg2img(backgroundSvg, {
+            width: this._backgroundWidth * 4,
+            height: this._backgroundHeight * 4
+        });
+
+        // QR Code Logo
+        const qrcodeLogoPath = path.join(this._globalConfig.imagesDir, layoutConfig.tag.logo);
+        const qrcodeLogoImageSvg = await fs.readFile(qrcodeLogoPath);
+        this._qrcodeLogoImageSvg = qrcodeLogoImageSvg.toString('utf8');
+
+        this._qrcodeSize = layoutConfig.tag.height - 2 * layoutConfig.tag.padding;
+
+        this._qrcodeLogoPng = await svg2img(qrcodeLogoImageSvg);
     }
 
     async _renderPageData(pageIndex, numberOfPages) {
         const {_pdf: pdf, _entity: entity} = this;
 
         // Header
-        pdf.font(config.header.font).fontSize(config.header.fontSize).fillColor(config.header.fontColor);
+        pdf.font(layoutConfig.header.font).fontSize(layoutConfig.header.fontSize).fillColor(layoutConfig.header.fontColor);
 
-        pdf.text(entity, 0, config.page.marginTop + config.page.marginBottom, {
-            width: config.pdf.size[0],
+        pdf.text(entity.name, 0, layoutConfig.header.top, {
+            width: layoutConfig.pdf.size[0],
             align: 'center'
         });
 
         // Page count
-        pdf.font(config.pageCount.font).fontSize(config.pageCount.fontSize).fillColor(config.header.fontColor);
+        pdf.font(layoutConfig.pageCount.font).fontSize(layoutConfig.pageCount.fontSize).fillColor(layoutConfig.header.fontColor);
 
-        pdf.text(`Página ${pageIndex} de ${numberOfPages}`, config.page.marginHz, config.pdf.size[1] - config.pageCount.bottom, {
-            width: config.pdf.size[0] - config.page.marginHz * 2,
+        pdf.text(`Página ${pageIndex} de ${numberOfPages}`, layoutConfig.page.marginHz, layoutConfig.pdf.size[1] - layoutConfig.pageCount.bottom, {
+            width: layoutConfig.pdf.size[0] - layoutConfig.page.marginHz * 2,
             align: 'right'
         });
     }
 
     async _renderTag(x, y, athlete) {
-        const {_entity: entity, _entityTag: entityTag} = this;
+        const {_entity: entity} = this;
 
-        const hash = adler32.sum(Object.values(athlete).join(config.data.hashSeparator)).toString(16);
+        const hash = adler32.sum(Object.values(athlete).join(layoutConfig.data.hashSeparator)).toString(16);
 
-        const text = [hash, maskId(entityTag, athlete), capitalizeFirstLetters(athlete.name), entity].join(config.data.qrcodeSeparator);
+        const text = [hash, this._maskId(athlete), capitalizeFirstLetters(athlete.name), entity.name].join(layoutConfig.data.qrcodeSeparator);
 
-        const qrcodeSize = config.tag.height - 2 * config.tag.padding;
+        await this._renderBackground(x, y, athlete);
 
-        await this._renderBackground(x, y, qrcodeSize, athlete);
+        await this._renderQrCode(x, y, text, athlete);
 
-        await this._renderQrCode(x, y, qrcodeSize, text, athlete);
+        await this._renderData(x, y, athlete);
 
-        await this._renderData(x, y, qrcodeSize,  athlete);
-
-        if (config.tag.hasBorder) {
+        if (layoutConfig.tag.hasBorder) {
             await this._renderBorder(x, y);
         }
     }
@@ -170,108 +198,122 @@ module.exports = class IdCardLayout extends Layout {
     async _renderBorder(x, y) {
         const {_pdf: pdf} = this;
 
-        pdf.lineWidth(config.tag.borderWidth).strokeColor(config.tag.borderColor);
+        pdf.lineWidth(layoutConfig.tag.borderWidth).strokeColor(layoutConfig.tag.borderColor);
 
-        pdf.roundedRect(x, y, config.tag.width, config.tag.height, config.tag.borderRadius);
+        pdf.roundedRect(x, y, layoutConfig.tag.width, layoutConfig.tag.height, layoutConfig.tag.borderRadius);
 
         pdf.stroke();
     }
 
-    async _renderBackground(x, y, qrcodeSize, athlete) {
-        const {_pdf: pdf} = this;
+    async _renderBackground(x, y, athlete) {
+        const {
+            _pdf: pdf,
+            _backgroundWidth: width,
+            _backgroundHeight: height,
+            _qrcodeSize: qrcodeSize
+        } = this;
 
-        const height = config.tag.height / 2 - config.tag.padding;
-        const width = height * config.background.width / config.background.height;
-        const left = x + qrcodeSize + config.tag.padding + (config.tag.width - qrcodeSize - config.tag.padding - width) / 2;
-        const top = y + config.tag.height / 2;
+        const left = x + qrcodeSize + layoutConfig.tag.padding + (layoutConfig.tag.width - qrcodeSize - layoutConfig.tag.padding - width) / 2;
+        const top = y + layoutConfig.tag.height / 2;
 
         if (athlete.exceptional) {
-            pdf.fillColor(config.tag.exceptionalBackground);
+            pdf.fillColor(layoutConfig.tag.exceptionalBackground);
         } else {
-            pdf.fillColor(config.tag.background);
+            pdf.fillColor(layoutConfig.tag.background);
         }
 
-        pdf.rect(x, y, config.tag.width, config.tag.height).fill();
+        pdf.rect(x, y, layoutConfig.tag.width, layoutConfig.tag.height).fill();
 
-        svg2pdfkit(pdf, this._backgroundImage, left, top, { width, height });
+        if (true) {
+            pdf.image(this._backgroundPng, left, top, { width, height });
+        } else {
+            // Disabled due to performance issues
+            svg2pdfkit(pdf, this._backgroundSvg, left, top, { width, height });
+        }
     }
 
-    async _renderQrCode(x, y, qrcodeSize, text, athlete) {
-        const {_pdf: pdf} = this;
+    async _renderQrCode(x, y, text, athlete) {
+        const {_pdf: pdf, _qrcodeSize: qrcodeSize} = this;
 
         const canvas = createCanvas(qrcodeSize, qrcodeSize);
 
+        // TODO: improve performance
         await QRCode.toCanvas(canvas, text, {
-            errorCorrectionLevel: config.tag.errorCorrectionLevel,
+            errorCorrectionLevel: layoutConfig.tag.errorCorrectionLevel,
             margin: 0,
             width: qrcodeSize,
             color: {
-                light: athlete.exceptional ? config.tag.exceptionalBackground : config.tag.background
+                light: athlete.exceptional ? layoutConfig.tag.exceptionalBackground : layoutConfig.tag.background
             }
         });
 
         const qrcodeBuffer = canvas.toBuffer('image/png');
 
-        const baseX = x + config.tag.padding;
-        const baseY = y + config.tag.padding;
+        const baseX = x + layoutConfig.tag.padding;
+        const baseY = y + layoutConfig.tag.padding;
 
         pdf.image(qrcodeBuffer, baseX, baseY);
 
-        await this._renderQrCodeLogo(baseX, baseY, qrcodeSize, athlete);
+        await this._renderQrCodeLogo(baseX, baseY, athlete);
     }
 
-    async _renderQrCodeLogo(baseX, baseY, canvasSize, athlete) {
-        const {_pdf: pdf} = this;
+    async _renderQrCodeLogo(baseX, baseY, athlete) {
+        const {_pdf: pdf, _qrcodeSize: qrcodeSize} = this;
 
-        const width = canvasSize / 3;
-        const relX = (canvasSize - width) / 2;
+        const width = qrcodeSize / 3;
+        const relX = (qrcodeSize - width) / 2;
 
         const left = baseX + relX;
         const top = baseY + relX;
 
-        pdf.fillColor(athlete.exceptional ? config.tag.exceptionalBackground : config.tag.background)
+        pdf.fillColor(athlete.exceptional ? layoutConfig.tag.exceptionalBackground : layoutConfig.tag.background)
             .rect(left, top, width, width)
             .fill();
 
-        svg2pdfkit(pdf, this._qrcodeLogoImage, left, top, {
-            width,
-            height: width,
-            assumePt: true,
-            preserveAspectRatio: 'xMinYMin meet'
-        });
+        if (true) {
+            pdf.image(this._qrcodeLogoPng, left, top, { width, height: width });
+        } else {
+            // Disabled due to performance issues
+            svg2pdfkit(pdf, this._qrcodeLogoImageSvg, left, top, {
+                width,
+                height: width,
+                assumePt: true,
+                preserveAspectRatio: 'xMinYMin meet'
+            });
+        }
     }
 
-    async _renderData(x, y, qrcodeSize, athlete) {
-        const {_pdf: pdf, _entity: entity, _entityTag: entityTag} = this;
+    async _renderData(x, y, athlete) {
+        const {_pdf: pdf, _entity: entity, _qrcodeSize: qrcodeSize} = this;
 
-        const left = x + qrcodeSize + config.tag.padding * 2;
-        let top = y + config.tag.padding;
+        const left = x + qrcodeSize + layoutConfig.tag.padding * 2;
+        let top = y + layoutConfig.tag.padding;
 
         const textOptions = {
-            width: config.tag.width - qrcodeSize - config.tag.padding * 3,
+            width: layoutConfig.tag.width - qrcodeSize - layoutConfig.tag.padding * 3,
             align: 'left'
         };
 
-        const id = maskId(entityTag, athlete);
+        const id = this._maskId(athlete);
 
-        pdf.font(config.tag.nameFont).fontSize(config.tag.nameFontSize).fillColor(config.tag.nameFontColor);
+        pdf.font(layoutConfig.tag.nameFont).fontSize(layoutConfig.tag.nameFontSize).fillColor(layoutConfig.tag.nameFontColor);
         pdf.text(id, left, top, textOptions);
         top += pdf.heightOfString(id, textOptions);
 
         const athleteName = capitalizeFirstLetters(athlete.name);
-        pdf.font(config.tag.nameFont).fontSize(config.tag.nameFontSize).fillColor(config.tag.nameFontColor);
+        pdf.font(layoutConfig.tag.nameFont).fontSize(layoutConfig.tag.nameFontSize).fillColor(layoutConfig.tag.nameFontColor);
         pdf.text(athleteName, left, top, textOptions);
         top += pdf.heightOfString(athleteName, textOptions);
 
-        pdf.font(config.tag.font).fontSize(config.tag.fontSize).fillColor(config.tag.fontColor);
-        pdf.text(entity, left, top, textOptions);
-        top += pdf.heightOfString(entity, textOptions);
+        pdf.font(layoutConfig.tag.font).fontSize(layoutConfig.tag.fontSize).fillColor(layoutConfig.tag.fontColor);
+        pdf.text(entity.name, left, top, textOptions);
+        top += pdf.heightOfString(entity.name, textOptions);
+    }
+
+    _maskId(athlete) {
+        return this._entity.tag + `${layoutConfig.tag.idMask}${athlete.id}`.substr(-3) + (athlete.exceptional ? '-E' : '');
     }
 };
-
-function maskId(entityTag, athlete) {
-    return entityTag + `${config.tag.idMask}${athlete.id}`.substr(-3) + (athlete.exceptional ? '-E' : '');
-}
 
 function capitalizeFirstLetters(str) {
     return str.toLowerCase()

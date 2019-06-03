@@ -1,0 +1,24 @@
+{
+    "name": "UEM",
+    "tag": "M",
+    "courses": {
+        "regular": [
+            "Bacharelado em Ciência da Computação",
+            "Bacharelado em Estatística",
+            "Bacharelado em Informática",
+            "Bacharelado em Matemática",
+            "Licenciatura em Matemática",
+            "Pós-Graduação em Ciência da Computação",
+            "Pós-Graduação em Matemática"
+        ],
+        "exceptional": [
+            "Bacharelado em Física",
+            "Bacharelado em Química",
+            "Licenciatura em Física",
+            "Licenciatura em Química",
+            "Pós-Graduação em Bioestatística",
+            "Pós-Graduação em Física",
+            "Pós-Graduação em Química"
+        ]
+    }
+}

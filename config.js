@@ -13,13 +13,13 @@ module.exports = {
         'Nome Completo',
         'RA',
         'Curso',
-        'Excepcional'
+        'Formado'
     ],
     attributes: {
         id: '#',
         name: 'Nome Completo',
         ra: 'RA',
         course: 'Curso',
-        exceptional: 'Excepcional'
+        graduated: 'Formado'
     }
 };
