@@ -12,11 +12,20 @@
             "Licenciatura em Matemática",
             "Pós-Graduação em Ciência da Computação",
             "Pós-Graduação em Estatística",
-            "Pós-Graduação em Matemática"
+            "Pós-Graduação em Matemática",
+            "Estatística",
+            "Matemática",
+            "Ciência da Computação",
+            "Mestrado em Ciência da Computação",
+            "Pós-Doutorado no IMECC",
+            "Matemática Aplicada e Computacional",
+            "Doutorado em Ciência da Computação",
+            "Mestrado em Estatística"
         ],
         "exceptional": [
             "Bacharelado em Física",
-            "Licenciatura em Física"
+            "Licenciatura em Física",
+            "Física"
         ]
     }
 }

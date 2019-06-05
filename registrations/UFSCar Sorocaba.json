@@ -5,11 +5,13 @@
         "regular": [
             "Bacharelado em Ciência da Computação",
             "Licenciatura em Matemática",
-            "Pós-Graduação em Computação"
+            "Pós-Graduação em Computação",
+            "Matemática"
         ],
         "exceptional": [
             "Licenciatura em Física",
-            "Licenciatura em Química"
+            "Licenciatura em Química",
+            "Química"
         ]
     }
 }

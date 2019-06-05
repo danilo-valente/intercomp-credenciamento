@@ -15,7 +15,11 @@
             "Engenharia Computacional",
             "Licenciatura em Matemática",
             "Pós-Graduação em Ciência da Computação",
-            "Pós-Graduação em Matemática"
+            "Pós-Graduação em Matemática",
+            "Sistemas de Informação",
+            "Ciência da Computação",
+            "Ciências Exatas",
+            "Estatística"
         ],
         "exceptional": [
             "Bacharelado em Ciências Exatas",
@@ -26,7 +30,9 @@
             "Licenciatura em Química",
             "Pós-Graduação em Física",
             "Pós-Graduação em Modelagem Computacional",
-            "Pós-Graduação em Química"
+            "Pós-Graduação em Química",
+            "Física",
+            "Química"
         ]
     }
 }

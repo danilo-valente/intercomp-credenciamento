@@ -9,7 +9,11 @@
             "Bacharelado em Matemática",
             "Licenciatura em Matemática",
             "Pós-Graduação em Ciência da Computação",
-            "Pós-Graduação em Matemática"
+            "Pós-Graduação em Matemática",
+            "Matemática",
+            "Estatística",
+            "Ciência da Computação",
+            "Informática"
         ],
         "exceptional": [
             "Bacharelado em Física",
@@ -18,7 +22,8 @@
             "Licenciatura em Química",
             "Pós-Graduação em Bioestatística",
             "Pós-Graduação em Física",
-            "Pós-Graduação em Química"
+            "Pós-Graduação em Química",
+            "Química"
         ]
     }
 }

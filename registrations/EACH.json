@@ -4,12 +4,15 @@
     "courses": {
         "regular": [
             "Bacharelado em Sistemas de Informação",
-            "Pós-Graduação em Sistemas de Informação"
+            "Pós-Graduação em Sistemas de Informação",
+            "Sistemas de Informação"
         ],
         "exceptional": [
             "Bacharelado em Biotecnologia",
             "Bacharelado em Gestão Ambiental",
-            "Bacharelado em Marketing"
+            "Bacharelado em Marketing",
+            "Marketing",
+            "Gestão Ambiental"
         ]
     }
 }
