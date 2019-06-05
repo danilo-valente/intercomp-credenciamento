@@ -1,5 +1,8 @@
 const csvtojson = require('csvtojson');
 const chalk = require('chalk');
+const ExportToCsv = require('export-to-csv');
+
+const Athlete = require('./Athlete');
 
 module.exports = class EntityCredentials {
 
@@ -52,7 +55,8 @@ module.exports = class EntityCredentials {
                 athlete[attr] = config.attributes[attr](obj);
                 return athlete;
             }, {}))
-            .filter(athlete => athlete.name && athlete.name.trim());
+            .filter(athlete => athlete.name && athlete.name.trim())
+            .map(obj => new Athlete(obj, entity, config));
 
         if (config.includeMissing) {
             return athletes;
@@ -74,5 +78,10 @@ module.exports = class EntityCredentials {
 
             return true;
         });
+    }
+    
+
+    async exportCsv(outputFile, multiProgress) {
+        // TODO
     }
 };

@@ -22,5 +22,9 @@ module.exports = {
         ra: athlete => athlete['RA'].trim(),
         course: athlete => athlete['Curso'].trim(),
         graduated: athlete => !!athlete['Formado'].trim()
+    },
+    data: {
+        hashSeparator: ',',
+        idMask: '000'
     }
 };

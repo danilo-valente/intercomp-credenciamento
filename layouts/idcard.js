@@ -2,15 +2,12 @@ const util = require('util');
 const path = require('path');
 const fs = require('fs-extra');
 const chalk = require('chalk');
-const adler32 = require('adler32');
 const QRCode = require('qrcode');
 const svg2img = util.promisify(require('svg2img'));
 const svg2pdfkit = require('svg-to-pdfkit');
 const {createCanvas, loadImage} = require('canvas');
 
 const Layout = require('../Layout');
-
-adler32.register();
 
 const layoutConfig = {
     progressBar: {
@@ -56,7 +53,6 @@ const layoutConfig = {
         nameFont: 'Courier-Bold',
         nameFontSize: 14,
         nameFontColor: '#363636',
-        idMask: '000',
         idFont: 'Courier-Bold',
         idFontSize: 14,
         idFontColor: '#363636',
@@ -184,9 +180,7 @@ module.exports = class IdCardLayout extends Layout {
     async _renderTag(x, y, athlete) {
         const {_entity: entity} = this;
 
-        const hash = adler32.sum(Object.values(athlete).join(layoutConfig.data.hashSeparator)).toString(16);
-
-        const text = [hash, this._maskId(athlete), capitalizeFirstLetters(athlete.name), entity.name].join(layoutConfig.data.qrcodeSeparator);
+        const text = [athlete.hash, athlete.maskedId, capitalizeFirstLetters(athlete.name), entity.name].join(layoutConfig.data.qrcodeSeparator);
 
         await this._renderBackground(x, y, athlete);
 
@@ -220,7 +214,7 @@ module.exports = class IdCardLayout extends Layout {
         const left = x + qrcodeSize + layoutConfig.tag.padding + (layoutConfig.tag.width - qrcodeSize - layoutConfig.tag.padding - width) / 2;
         const top = y + layoutConfig.tag.height / 2;
 
-        pdf.fillColor(this.isExceptional(athlete) ? layoutConfig.tag.exceptional.background : layoutConfig.tag.background);
+        pdf.fillColor(athlete.isExceptional ? layoutConfig.tag.exceptional.background : layoutConfig.tag.background);
 
         pdf.rect(x, y, layoutConfig.tag.width, layoutConfig.tag.height).fill();
 
@@ -243,7 +237,7 @@ module.exports = class IdCardLayout extends Layout {
             margin: 0,
             width: qrcodeSize,
             color: {
-                light: this.isExceptional(athlete) ? layoutConfig.tag.exceptional.background : layoutConfig.tag.background
+                light: athlete.isExceptional ? layoutConfig.tag.exceptional.background : layoutConfig.tag.background
             }
         });
 
@@ -266,7 +260,7 @@ module.exports = class IdCardLayout extends Layout {
         const left = baseX + relX;
         const top = baseY + relX;
 
-        pdf.fillColor(this.isExceptional(athlete) ? layoutConfig.tag.exceptional.background : layoutConfig.tag.background)
+        pdf.fillColor(athlete.isExceptional ? layoutConfig.tag.exceptional.background : layoutConfig.tag.background)
             .rect(left, top, width, width)
             .fill();
 
@@ -289,7 +283,7 @@ module.exports = class IdCardLayout extends Layout {
         const left = x + qrcodeSize + layoutConfig.tag.padding * 2;
         let top = y + layoutConfig.tag.padding;
 
-        const bgColor = this.isExceptional(athlete) ? layoutConfig.tag.exceptional.background : layoutConfig.tag.background;
+        const bgColor = athlete.isExceptional ? layoutConfig.tag.exceptional.background : layoutConfig.tag.background;
 
         const textOptions = {
             width: layoutConfig.tag.width - qrcodeSize - layoutConfig.tag.padding * 3,
@@ -301,7 +295,7 @@ module.exports = class IdCardLayout extends Layout {
         // ID
         pdf.font(layoutConfig.tag.idFont).fontSize(layoutConfig.tag.idFontSize);
 
-        const id = this._maskId(athlete);
+        const id = athlete.maskedId;
         const idWidth = pdf.widthOfString(id, textOptions);
         const idHeight = pdf.heightOfString(id, textOptions);
 
@@ -330,13 +324,6 @@ module.exports = class IdCardLayout extends Layout {
         pdf.fillColor(bgColor, layoutConfig.tag.textBgOpacity).rect(left, top, entityWidth, entityHeight).fill();
         pdf.fillColor(layoutConfig.tag.fontColor, 1).text(entity.name, left, top, textOptions);
         top += pdf.heightOfString(entityName, textOptions);
-    }
-
-    _maskId(athlete) {
-        return this._entity.tag
-            + `${layoutConfig.tag.idMask}${athlete.id}`.substr(-3)
-            + (this.isCourseExceptional(athlete) ? '-NE' : '')
-            + (athlete.graduated ? '-F' : '');
     }
 };
 
