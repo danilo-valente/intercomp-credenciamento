@@ -17,10 +17,10 @@ module.exports = {
         'Formado'
     ],
     attributes: {
-        id: '#',
-        name: 'Nome Completo',
-        ra: 'RA',
-        course: 'Curso',
-        graduated: 'Formado'
+        id: athlete => parseInt(athlete['#'].trim(), 10),
+        name: athlete => athlete['Nome Completo'].trim(),
+        ra: athlete => athlete['RA'].trim(),
+        course: athlete => athlete['Curso'].trim(),
+        graduated: athlete => !!athlete['Formado'].trim()
     }
 };

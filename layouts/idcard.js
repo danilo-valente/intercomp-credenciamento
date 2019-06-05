@@ -49,14 +49,17 @@ const layoutConfig = {
         margin: 0,
         padding: 6,
         background: '#ffffff',
-        exceptionalBackground: '#ffbfd6',
-        font: 'Raleway-Regular',
+        font: 'Courier',
         fontSize: 12,
         fontColor: '#363636',
-        nameFont: 'Raleway-Bold',
+        textBgOpacity: 0.5,
+        nameFont: 'Courier-Bold',
         nameFontSize: 14,
         nameFontColor: '#363636',
         idMask: '000',
+        idFont: 'Courier-Bold',
+        idFontSize: 14,
+        idFontColor: '#363636',
         hasBorder: true,
         borderColor: '#999999',
         borderWidth: 1,
@@ -65,6 +68,7 @@ const layoutConfig = {
         logo: 'logo-30-anos.svg',
         exceptional: {
             color: '#ff0000',
+            background: '#ffbfd6',
             radius: 8,
             borderColor: '#990000',
             borderWidth: 2
@@ -216,11 +220,7 @@ module.exports = class IdCardLayout extends Layout {
         const left = x + qrcodeSize + layoutConfig.tag.padding + (layoutConfig.tag.width - qrcodeSize - layoutConfig.tag.padding - width) / 2;
         const top = y + layoutConfig.tag.height / 2;
 
-        if (athlete.exceptional) {
-            pdf.fillColor(layoutConfig.tag.exceptionalBackground);
-        } else {
-            pdf.fillColor(layoutConfig.tag.background);
-        }
+        pdf.fillColor(this.isExceptional(athlete) ? layoutConfig.tag.exceptional.background : layoutConfig.tag.background);
 
         pdf.rect(x, y, layoutConfig.tag.width, layoutConfig.tag.height).fill();
 
@@ -243,7 +243,7 @@ module.exports = class IdCardLayout extends Layout {
             margin: 0,
             width: qrcodeSize,
             color: {
-                light: athlete.exceptional ? layoutConfig.tag.exceptionalBackground : layoutConfig.tag.background
+                light: this.isExceptional(athlete) ? layoutConfig.tag.exceptional.background : layoutConfig.tag.background
             }
         });
 
@@ -266,7 +266,7 @@ module.exports = class IdCardLayout extends Layout {
         const left = baseX + relX;
         const top = baseY + relX;
 
-        pdf.fillColor(athlete.exceptional ? layoutConfig.tag.exceptionalBackground : layoutConfig.tag.background)
+        pdf.fillColor(this.isExceptional(athlete) ? layoutConfig.tag.exceptional.background : layoutConfig.tag.background)
             .rect(left, top, width, width)
             .fill();
 
@@ -289,29 +289,54 @@ module.exports = class IdCardLayout extends Layout {
         const left = x + qrcodeSize + layoutConfig.tag.padding * 2;
         let top = y + layoutConfig.tag.padding;
 
+        const bgColor = this.isExceptional(athlete) ? layoutConfig.tag.exceptional.background : layoutConfig.tag.background;
+
         const textOptions = {
             width: layoutConfig.tag.width - qrcodeSize - layoutConfig.tag.padding * 3,
             align: 'left'
         };
 
-        const id = this._maskId(athlete);
+        // TODO: fix text background overflow
 
-        pdf.font(layoutConfig.tag.nameFont).fontSize(layoutConfig.tag.nameFontSize).fillColor(layoutConfig.tag.nameFontColor);
-        pdf.text(id, left, top, textOptions);
-        top += pdf.heightOfString(id, textOptions);
+        // ID
+        pdf.font(layoutConfig.tag.idFont).fontSize(layoutConfig.tag.idFontSize);
+
+        const id = this._maskId(athlete);
+        const idWidth = pdf.widthOfString(id, textOptions);
+        const idHeight = pdf.heightOfString(id, textOptions);
+
+        pdf.fillColor(bgColor, layoutConfig.tag.textBgOpacity).rect(left, top, idWidth, idHeight).fill();
+        pdf.fillColor(layoutConfig.tag.idFontColor, 1).text(id, left, top, textOptions);
+        top += idHeight;
+
+        // Name
+        pdf.font(layoutConfig.tag.nameFont).fontSize(layoutConfig.tag.nameFontSize);
 
         const athleteName = capitalizeFirstLetters(athlete.name);
-        pdf.font(layoutConfig.tag.nameFont).fontSize(layoutConfig.tag.nameFontSize).fillColor(layoutConfig.tag.nameFontColor);
-        pdf.text(athleteName, left, top, textOptions);
-        top += pdf.heightOfString(athleteName, textOptions);
+        const nameWidth = pdf.widthOfString(athleteName, textOptions);
+        const nameHeight = pdf.heightOfString(athleteName, textOptions);
 
-        pdf.font(layoutConfig.tag.font).fontSize(layoutConfig.tag.fontSize).fillColor(layoutConfig.tag.fontColor);
-        pdf.text(entity.name, left, top, textOptions);
-        top += pdf.heightOfString(entity.name, textOptions);
+        pdf.fillColor(bgColor, layoutConfig.tag.textBgOpacity).rect(left, top, nameWidth, nameHeight).fill();
+        pdf.fillColor(layoutConfig.tag.nameFontColor, 1).text(athleteName, left, top, textOptions);
+        top += nameHeight;
+
+        // Entity
+        pdf.font(layoutConfig.tag.font).fontSize(layoutConfig.tag.fontSize);
+
+        const entityName = entity.name;
+        const entityWidth = pdf.widthOfString(entityName, textOptions);
+        const entityHeight = pdf.heightOfString(entityName, textOptions);
+
+        pdf.fillColor(bgColor, layoutConfig.tag.textBgOpacity).rect(left, top, entityWidth, entityHeight).fill();
+        pdf.fillColor(layoutConfig.tag.fontColor, 1).text(entity.name, left, top, textOptions);
+        top += pdf.heightOfString(entityName, textOptions);
     }
 
     _maskId(athlete) {
-        return this._entity.tag + `${layoutConfig.tag.idMask}${athlete.id}`.substr(-3) + (athlete.exceptional ? '-E' : '');
+        return this._entity.tag
+            + `${layoutConfig.tag.idMask}${athlete.id}`.substr(-3)
+            + (this.isCourseExceptional(athlete) ? '-NE' : '')
+            + (athlete.graduated ? '-F' : '');
     }
 };
 

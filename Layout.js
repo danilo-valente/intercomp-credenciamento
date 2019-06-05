@@ -33,6 +33,14 @@ module.exports = class Layout {
         });
     }
 
+    isExceptional(athlete) {
+        return athlete.graduated || this.isCourseExceptional(athlete);
+    }
+
+    isCourseExceptional(athlete) {
+        return this._entity.courses.exceptional.indexOf(athlete.course) !== -1;
+    }
+
     id() {
         throw new Error('Not yet implemented');
     }

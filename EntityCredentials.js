@@ -49,25 +49,24 @@ module.exports = class EntityCredentials {
 
         const athletes = rawObjects.slice(config.skipLines)
             .map(obj => attributeNames.reduce((athlete, attr) => {
-                athlete[attr] = obj[config.attributes[attr]];
+                athlete[attr] = config.attributes[attr](obj);
                 return athlete;
             }, {}))
             .filter(athlete => athlete.name && athlete.name.trim());
-    
+
         if (config.includeMissing) {
             return athletes;
         }
 
         return athletes.filter(athlete => {
 
-            const course = athlete.course.trim();
-            if (!course || !athlete.ra.trim()) {
+            if (!athlete.course || !athlete.ra.trim()) {
                 this.warn(`Ignoring athlete ${chalk.red(athlete.name)} because there is missing information about them`);
 
                 return false;
             }
 
-            if (allowedCourses.indexOf(course) === -1) {
+            if (allowedCourses.indexOf(athlete.course) === -1) {
                 this.warn(`Ignoring athlete ${chalk.red(athlete.name)} because they belong to the course ${chalk.red(athlete.course)} which is not registered in the courses list`);
 
                 return false;
