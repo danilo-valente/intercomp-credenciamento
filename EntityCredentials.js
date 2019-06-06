@@ -1,6 +1,5 @@
 const csvtojson = require('csvtojson');
 const chalk = require('chalk');
-const ExportToCsv = require('export-to-csv');
 
 const Athlete = require('./Athlete');
 
@@ -13,14 +12,24 @@ module.exports = class EntityCredentials {
         this._athletes = null;
     }
 
-    async log(message, level = 'log') {
-        if (level !== 'log' || this._config.showLogs) {
-            console[level](`${chalk.yellow('[' + this._entity.name + ']')} ${message}`);
+    get athletes() {
+        return this._athletes;
+    }
+
+    _log(level, message) {
+        console[level](`${chalk.yellow('[' + this._entity.name + ']')} ${message}`);
+    }
+
+    async log(message) {
+        if (this._config.showLogs) {
+            this._log('log', message);
         }
     }
 
     async warn(message) {
-        return this.log(message, 'warn');
+        if (this._config.showWarnings) {
+            this._log('warn', message);
+        }
     }
 
     async setup() {
@@ -28,7 +37,7 @@ module.exports = class EntityCredentials {
     }
 
     async generate(outputFile, layoutClass, multiProgress) {
-        const {_entity: entity, _csvFile: csvFile, _config: config, _athletes: athletes} = this;
+        const {_entity: entity, _config: config, _athletes: athletes} = this;
     
         this.log(`Generating credentials using layout ${chalk.green(layoutClass.id)}`);
         
@@ -78,10 +87,5 @@ module.exports = class EntityCredentials {
 
             return true;
         });
-    }
-    
-
-    async exportCsv(outputFile, multiProgress) {
-        // TODO
     }
 };

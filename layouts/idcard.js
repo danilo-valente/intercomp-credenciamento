@@ -10,11 +10,6 @@ const {createCanvas, loadImage} = require('canvas');
 const Layout = require('../Layout');
 
 const layoutConfig = {
-    progressBar: {
-        width: 30,
-        complete: '█',
-        incomplete: '░'
-    },
     pdf: {
         margin: 0,
         dpi: 72,
@@ -49,7 +44,7 @@ const layoutConfig = {
         font: 'Courier',
         fontSize: 12,
         fontColor: '#363636',
-        textBgOpacity: 0.5,
+        textBgOpacity: 0.7,
         nameFont: 'Courier-Bold',
         nameFontSize: 14,
         nameFontColor: '#363636',
@@ -108,7 +103,7 @@ module.exports = class IdCardLayout extends Layout {
         const numberOfPages = Math.ceil(athletes.length / tagsPerPage);
 
         const progressBar = this._multiProgress.newBar(chalk.green(entity.name) + ' [:bar] :percent | ETA: :etas', {
-            ...layoutConfig.progressBar,
+            ...this._globalConfig.progressBar,
             total: athletes.length
         });
 
