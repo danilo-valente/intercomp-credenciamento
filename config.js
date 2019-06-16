@@ -5,6 +5,7 @@ const RESOURCES_DIR = 'resources';
 module.exports = {
     showLogs: false,
     showWarnings: false,
+    noValidate: false,
     includeMissing: false,
     fontsDir: path.join(__dirname, RESOURCES_DIR, 'fonts'),
     imagesDir: path.join(__dirname, RESOURCES_DIR, 'images'),

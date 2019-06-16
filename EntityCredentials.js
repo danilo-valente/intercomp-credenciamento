@@ -39,10 +39,10 @@ module.exports = class EntityCredentials {
     async generate(outputFile, layoutClass, multiProgress) {
         const {_entity: entity, _config: config, _athletes: athletes} = this;
     
-        this.log(`Generating credentials using layout ${chalk.green(layoutClass.id)}`);
-        
         const layout = new layoutClass(entity, athletes, outputFile, multiProgress, config);
     
+        this.log(`Generating credentials using layout ${chalk.green(layout.id())}`);
+        
         await layout.render();
     
         this.log(`Credentials ${chalk.green('successfully')} generated`);
@@ -57,29 +57,22 @@ module.exports = class EntityCredentials {
     
         const attributeNames = Object.keys(config.attributes);
     
-        const allowedCourses = entity.courses.regular.concat(entity.courses.exceptional);
-
-        const athletes = rawObjects.slice(config.skipLines)
+        return rawObjects.slice(config.skipLines)
             .map(obj => attributeNames.reduce((athlete, attr) => {
                 athlete[attr] = config.attributes[attr](obj);
                 return athlete;
             }, {}))
             .filter(athlete => athlete.name && athlete.name.trim())
-            .map(obj => new Athlete(obj, entity, config));
+            .map(obj => new Athlete(obj, entity, config))
+            .filter(athlete => {
 
-        if (config.includeMissing) {
-            return athletes;
-        }
-
-        return athletes.filter(athlete => {
-
-            if (!athlete.course || !athlete.ra.trim()) {
+            if (!config.includeMissing && (!athlete.course || !athlete.ra.trim())) {
                 this.warn(`Ignoring athlete ${chalk.red(athlete.name)} because there is missing information about them`);
 
                 return false;
             }
 
-            if (allowedCourses.indexOf(athlete.course) === -1) {
+            if (!config.noValidate && athlete.isCourseNotAllowed) {
                 this.warn(`Ignoring athlete ${chalk.red(athlete.name)} because they belong to the course ${chalk.red(athlete.course)} which is not registered in the courses list`);
 
                 return false;

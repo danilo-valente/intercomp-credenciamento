@@ -12,7 +12,7 @@ const EntityCredentials = require('./EntityCredentials');
 const argv = require('yargs')
     .usage('$0 <cmd> [args]')
 
-    .command('gen <json>', 'Generate credentials from JSON files!', yargs => {
+    .command('gen <json>', 'Generate credentials from JSON files', yargs => {
         return yargs
             .positional('json', {
                 type: 'string',
@@ -39,6 +39,11 @@ const argv = require('yargs')
                 type: 'boolean',
                 default: config.showWarnings
             })
+            .option('noValidate', {
+                describe: 'Whether to include or exclude athletes which do not belong to allowed courses',
+                type: 'boolean',
+                default: config.validateCourse
+            })
             .option('includeMissing', {
                 describe: 'Include athletes with missing information',
                 type: 'boolean',
@@ -47,15 +52,35 @@ const argv = require('yargs')
             .demandOption(['outputDir', 'layout']);
     }, async argv => generateAll(argv, config))
 
-    .command('val <json>', 'Validate registrations from JSON files!', yargs => {
+    .command('val <json>', 'Validate registrations from JSON files', yargs => {
         return yargs
             .positional('json', {
                 type: 'string',
                 describe: 'Source JSON file'
+            })
+            .option('log', {
+                describe: 'Show log information',
+                type: 'boolean',
+                default: config.showLogs
+            })
+            .option('warn', {
+                describe: 'Show warning information',
+                type: 'boolean',
+                default: config.showWarnings
+            })
+            .option('noValidate', {
+                describe: 'Whether to include or exclude athletes which do not belong to allowed courses',
+                type: 'boolean',
+                default: config.validateCourse
+            })
+            .option('includeMissing', {
+                describe: 'Include athletes with missing information',
+                type: 'boolean',
+                default: config.includeMissing
             });
     }, async argv => validateAll(argv, config))
 
-    .command('csv <json>', 'Generate athletes list from JSON files!', yargs => {
+    .command('csv <json>', 'Generate athletes list from JSON files', yargs => {
         return yargs
             .positional('json', {
                 type: 'string',
@@ -76,6 +101,11 @@ const argv = require('yargs')
                 type: 'boolean',
                 default: config.showWarnings
             })
+            .option('noValidate', {
+                describe: 'Whether to include or exclude athletes which do not belong to allowed courses',
+                type: 'boolean',
+                default: config.validateCourse
+            })
             .option('includeMissing', {
                 describe: 'Include athletes with missing information',
                 type: 'boolean',
@@ -90,7 +120,7 @@ const argv = require('yargs')
     .argv;
 
 async function generateAll(argv, config) {
-    const {json: globInput, outputDir, layout: layoutId, log: showLogs, warn: showWarnings, includeMissing} = argv;
+    const {json: globInput, outputDir, layout: layoutId, log: showLogs, warn: showWarnings, noValidate, includeMissing} = argv;
 
     const layoutPath = path.join(__dirname, 'layouts', layoutId);
     const layoutClass = require(layoutPath);
@@ -107,6 +137,7 @@ async function generateAll(argv, config) {
             ...config,
             showLogs,
             showWarnings,
+            noValidate,
             includeMissing
         });
 
@@ -121,20 +152,26 @@ async function generateAll(argv, config) {
 }
 
 async function validateAll(argv, config) {
-    const {json: globInput} = argv;
+    const {json: globInput, log: showLogs, warn: showWarnings, noValidate, includeMissing} = argv;
 
     const inputFiles = await glob(globInput);
 
     return await Promise.all(inputFiles.map(async entityFile => {
 
-        const {credentials} = await readEntity(entityFile, config);
+        const {credentials} = await readEntity(entityFile, {
+            ...config,
+            showLogs,
+            showWarnings,
+            noValidate,
+            includeMissing
+        });
 
         return await credentials.setup();
     }));
 }
 
 async function assembleAll(argv, config) {
-    const {json: globInput, output, log: showLogs, warn: showWarnings, includeMissing} = argv;
+    const {json: globInput, output, log: showLogs, warn: showWarnings, noValidate,includeMissing} = argv;
 
     const inputFiles = await glob(globInput);
 
@@ -151,6 +188,7 @@ async function assembleAll(argv, config) {
             ...config,
             showLogs,
             showWarnings,
+            noValidate,
             includeMissing
         });
 

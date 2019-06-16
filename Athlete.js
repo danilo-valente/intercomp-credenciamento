@@ -14,6 +14,7 @@ module.exports = class Athlete {
         }
 
         this.entity = entity;
+        this.allowedCourses = entity.courses.regular.concat(entity.courses.exceptional);
         this.config = config;
     }
 
@@ -29,10 +30,14 @@ module.exports = class Athlete {
     }
 
     get isExceptional() {
-        return this.graduated || this.isCourseExceptional;
+        return this.graduated || this.isCourseExceptional || this.isCourseNotAllowed;
     }
 
     get isCourseExceptional() {
         return this.entity.courses.exceptional.indexOf(this.course) !== -1;
+    }
+
+    get isCourseNotAllowed() {
+        return this.config.noValidate && this.allowedCourses.indexOf(this.course) === -1;
     }
 };
