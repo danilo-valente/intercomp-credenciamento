@@ -14,7 +14,8 @@ module.exports = class Athlete {
         }
 
         this.entity = entity;
-        this.allowedCourses = entity.courses.regular.concat(entity.courses.exceptional);
+        this.exceptionalCourses = entity.courses.exceptional.map(course => course.toLowerCase());
+        this.allowedCourses = entity.courses.regular.concat(entity.courses.exceptional).map(course => course.toLowerCase());
         this.config = config;
     }
 
@@ -34,10 +35,10 @@ module.exports = class Athlete {
     }
 
     get isCourseExceptional() {
-        return this.entity.courses.exceptional.indexOf(this.course) !== -1;
+        return this.exceptionalCourses.indexOf(this.course.toLowerCase()) !== -1;
     }
 
     get isCourseNotAllowed() {
-        return this.config.noValidate && this.allowedCourses.indexOf(this.course) === -1;
+        return this.config.noValidate && this.allowedCourses.indexOf(this.course.toLowerCase()) === -1;
     }
 };
