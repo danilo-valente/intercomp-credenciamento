@@ -50,7 +50,7 @@ module.exports = {
             athlete => athlete.graduated ? 'SIM' : '',
             athlete => athlete.course,
             athlete => athlete.entity.name,
-            athlete => athlete.isExceptional ? 'SIM' : ''
+            athlete => athlete.isCourseExceptional ? 'SIM' : ''
         ]
     },
     data: {
