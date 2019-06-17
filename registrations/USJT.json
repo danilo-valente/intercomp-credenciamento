@@ -3,12 +3,12 @@
     "tag": "T",
     "courses": {
         "regular": [
-            "Análise de Sistemas",
+            "Análise e Desenvolvimento de Sistemas",
             "Ciência da Computação",
             "Engenharia de Computação",
             "Exatas",
             "Gestão de Tecnologia da Informação",
-            "Sistemas da Computação"
+            "Sistemas de Informação"
         ],
         "exceptional": []
     }
