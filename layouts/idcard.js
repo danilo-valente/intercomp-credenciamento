@@ -58,10 +58,10 @@ const layoutConfig = {
         errorCorrectionLevel: 'Q',
         logo: 'logo-30-anos.svg',
         exceptional: {
-            color: '#ff0000',
-            background: '#ffbfd6',
+            color: '#ffff00',
+            background: '#d6ffbf',
             radius: 8,
-            borderColor: '#990000',
+            borderColor: '#999900',
             borderWidth: 2
         }
     },
