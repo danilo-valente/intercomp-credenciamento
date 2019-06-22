@@ -40,7 +40,7 @@ const layoutConfig = {
         height: 123,
         margin: 0,
         padding: 6,
-        background: '#ffffff',
+        background: '#d6ffbf',
         font: 'Courier',
         fontSize: 12,
         fontColor: '#363636',
