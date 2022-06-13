@@ -56,12 +56,12 @@ const layoutConfig = {
         borderWidth: 1,
         borderRadius: 0,
         errorCorrectionLevel: 'Q',
-        logo: 'logo-30-anos.svg',
+        logo: null,
         exceptional: {
-            color: '#ff0000',
-            background: '#ffbfd6',
+            color: '#006ba5',
+            background: '#99e1ff',
             radius: 8,
-            borderColor: '#990000',
+            borderColor: '#004469',
             borderWidth: 2
         }
     },
@@ -72,7 +72,7 @@ const layoutConfig = {
     background: {
         width: 1565,
         height: 800,
-        image: 'logo-vtex.svg'
+        image: 'logo-ninja-edition.svg'
     }
 };
 
@@ -142,14 +142,22 @@ module.exports = class IdCardLayout extends Layout {
             height: this._backgroundHeight * 4
         });
 
-        // QR Code Logo
-        const qrcodeLogoPath = path.join(this._globalConfig.imagesDir, layoutConfig.tag.logo);
-        const qrcodeLogoImageSvg = await fs.readFile(qrcodeLogoPath);
-        this._qrcodeLogoImageSvg = qrcodeLogoImageSvg.toString('utf8');
-
         this._qrcodeSize = layoutConfig.tag.height - 2 * layoutConfig.tag.padding;
 
-        this._qrcodeLogoPng = await svg2img(qrcodeLogoImageSvg);
+        this._qrcodeLogoEnabled = !!layoutConfig.tag.logo;
+
+        if (this._qrcodeLogoEnabled) {
+            // QR Code Logo
+            const qrcodeLogoPath = path.join(this._globalConfig.imagesDir, layoutConfig.tag.logo);
+            const qrcodeLogoImageSvg = await fs.readFile(qrcodeLogoPath);
+            this._qrcodeLogoImageSvg = qrcodeLogoImageSvg.toString('utf8');
+
+            this._qrcodeLogoPng = await svg2img(qrcodeLogoImageSvg);
+        } else {
+            this._qrcodeLogoImageSvg = null;
+
+            this._qrcodeLogoPng = null;
+        }
     }
 
     async _renderPageData(pageIndex, numberOfPages) {
@@ -247,6 +255,11 @@ module.exports = class IdCardLayout extends Layout {
     }
 
     async _renderQrCodeLogo(baseX, baseY, athlete) {
+
+        if (!this._qrcodeLogoEnabled) {
+            return;
+        }
+
         const {_pdf: pdf, _qrcodeSize: qrcodeSize} = this;
 
         const width = qrcodeSize / 3;

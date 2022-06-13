@@ -5,14 +5,12 @@
         "regular": [
             "Bacharelado em Sistemas de Informação",
             "Pós-Graduação em Sistemas de Informação",
-            "Sistemas de Informação"
+            "Bacharelado em Biotecnologia",
+            "Gestão Ambiental",
+            "Licenciatura em Ciências da Natureza"
         ],
         "exceptional": [
-            "Bacharelado em Biotecnologia",
-            "Bacharelado em Gestão Ambiental",
-            "Bacharelado em Marketing",
-            "Marketing",
-            "Gestão Ambiental"
+            "Marketing"
         ]
     }
 }

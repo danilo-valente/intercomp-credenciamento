@@ -1,15 +1,19 @@
 {
     "name": "USJT",
-    "tag": "T",
+    "tag": "J",
     "courses": {
         "regular": [
-            "Análise e Desenvolvimento de Sistemas",
+            "Análise de Sistemas",
             "Ciência da Computação",
             "Engenharia de Computação",
             "Exatas",
             "Gestão de Tecnologia da Informação",
-            "Sistemas de Informação"
+            "Sistemas de Informação",
+            "Pós-Graduação em Computação"
         ],
-        "exceptional": []
+        "exceptional": [
+            "Marketing",
+            "Direito"
+        ]
     }
 }

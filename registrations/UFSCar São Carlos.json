@@ -1,6 +1,6 @@
 {
     "name": "UFSCar São Carlos",
-    "tag": "F",
+    "tag": "SC",
     "courses": {
         "regular": [
             "Bacharelado em Ciência da Computação",
@@ -15,7 +15,9 @@
         "exceptional": [
             "Bacharelado em Física",
             "Engenharia Física",
-            "Licenciatura em Física"
+            "Licenciatura em Física",
+            "Engenharia de Materiais",
+            "Engenharia de Produção"
         ]
     }
 }

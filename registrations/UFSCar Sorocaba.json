@@ -6,12 +6,9 @@
             "Bacharelado em Ciência da Computação",
             "Licenciatura em Matemática",
             "Pós-Graduação em Computação",
-            "Matemática"
-        ],
-        "exceptional": [
             "Licenciatura em Física",
-            "Licenciatura em Química",
-            "Química"
-        ]
+            "Licenciatura em Química"
+        ],
+        "exceptional": []
     }
 }

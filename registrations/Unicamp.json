@@ -21,12 +21,15 @@
             "Matemática Aplicada e Computacional",
             "Doutorado em Ciência da Computação",
             "Mestrado em Estatística",
-            "Mestrado em Matemática Aplicada"
-        ],
-        "exceptional": [
             "Bacharelado em Física",
             "Licenciatura em Física",
-            "Física"
+            "Química",
+            "Licenciatura Integrada em Química e Física",
+            "Bacharelado em Física Médica"
+        ],
+        "exceptional": [
+            "Engenharia Química",
+            "Engenharia Física"
         ]
     }
 }
