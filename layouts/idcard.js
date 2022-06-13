@@ -63,6 +63,13 @@ const layoutConfig = {
             radius: 8,
             borderColor: '#004469',
             borderWidth: 2
+        },
+        courseNotAllowed: {
+            color: '#a5002c',
+            background: '#ff99a5',
+            radius: 8,
+            borderColor: '#690018',
+            borderWidth: 2
         }
     },
     data: {
@@ -217,7 +224,13 @@ module.exports = class IdCardLayout extends Layout {
         const left = x + qrcodeSize + layoutConfig.tag.padding + (layoutConfig.tag.width - qrcodeSize - layoutConfig.tag.padding - width) / 2;
         const top = y + layoutConfig.tag.height / 2;
 
-        pdf.fillColor(athlete.isExceptional ? layoutConfig.tag.exceptional.background : layoutConfig.tag.background);
+        pdf.fillColor(
+            athlete.isCourseNotAllowed
+                ? layoutConfig.tag.courseNotAllowed.background
+                : athlete.isExceptional
+                    ? layoutConfig.tag.exceptional.background
+                    : layoutConfig.tag.background
+        );
 
         pdf.rect(x, y, layoutConfig.tag.width, layoutConfig.tag.height).fill();
 
@@ -240,7 +253,11 @@ module.exports = class IdCardLayout extends Layout {
             margin: 0,
             width: qrcodeSize,
             color: {
-                light: athlete.isExceptional ? layoutConfig.tag.exceptional.background : layoutConfig.tag.background
+                light: athlete.isCourseNotAllowed
+                    ? layoutConfig.tag.courseNotAllowed.background
+                    : athlete.isExceptional
+                        ? layoutConfig.tag.exceptional.background
+                        : layoutConfig.tag.background
             }
         });
 
@@ -268,7 +285,13 @@ module.exports = class IdCardLayout extends Layout {
         const left = baseX + relX;
         const top = baseY + relX;
 
-        pdf.fillColor(athlete.isExceptional ? layoutConfig.tag.exceptional.background : layoutConfig.tag.background)
+        pdf.fillColor(
+            athlete.isCourseNotAllowed
+                ? layoutConfig.tag.courseNotAllowed.background
+                : athlete.isExceptional
+                    ? layoutConfig.tag.exceptional.background
+                    : layoutConfig.tag.background
+        )
             .rect(left, top, width, width)
             .fill();
 
@@ -291,7 +314,11 @@ module.exports = class IdCardLayout extends Layout {
         const left = x + qrcodeSize + layoutConfig.tag.padding * 2;
         let top = y + layoutConfig.tag.padding;
 
-        const bgColor = athlete.isExceptional ? layoutConfig.tag.exceptional.background : layoutConfig.tag.background;
+        const bgColor = athlete.isCourseNotAllowed
+            ? layoutConfig.tag.courseNotAllowed.background
+            : athlete.isExceptional
+                ? layoutConfig.tag.exceptional.background
+                : layoutConfig.tag.background;
 
         const textOptions = {
             width: layoutConfig.tag.width - qrcodeSize - layoutConfig.tag.padding * 3,
