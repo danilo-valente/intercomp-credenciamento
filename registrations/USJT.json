@@ -3,17 +3,22 @@
     "tag": "J",
     "courses": {
         "regular": [
-            "Análise de Sistemas",
-            "Ciência da Computação",
-            "Engenharia de Computação",
-            "Exatas",
-            "Gestão de Tecnologia da Informação",
-            "Sistemas de Informação",
-            "Pós-Graduação em Computação"
+            "Análise de desenvolvimento de sistemas",
+            "Banco de dados: data science, big data e BI.",
+            "Ciência da computação",
+            "Design de games",
+            "Engenharia da computação",
+            "Gestão da tecnologia da informação",
+            "Matemática",
+            "Segurança da informação",
+            "Sistemas da informação",
+            "Sistemas para internet"
         ],
         "exceptional": [
             "Marketing",
-            "Direito"
+            "Direito",
+            "Administração",
+            "Engenharia Elétrica"
         ]
     }
 }
